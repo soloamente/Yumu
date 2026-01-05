@@ -13,6 +13,7 @@ import { isJapanese, getRandomHiragana, toHiragana, hasKanji } from '../../utils
 import { validateJapaneseWord, getWordReading } from '../../services/jisho-service.js';
 import { gameStatsSchema } from '../../database/schema.js';
 import { awardXp } from '../../services/level-service.js';
+import { validateGameChannel } from '../../utils/game-channel-validator.js';
 
 interface WordBombData {
   targetChar: string;
@@ -64,6 +65,11 @@ const wordBomb: Command = {
 
 async function startGame(interaction: ChatInputCommandInteraction): Promise<void> {
   const channelId = interaction.channelId;
+
+  // Check channel permissions
+  if (!(await validateGameChannel(interaction, 'word_bomb'))) {
+    return;
+  }
 
   if (interaction.client.activeGames.has(channelId)) {
     await interaction.reply({

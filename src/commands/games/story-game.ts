@@ -11,6 +11,7 @@ import type { Command } from '../../types/index.js';
 import { config } from '../../config.js';
 import { gameStatsSchema } from '../../database/schema.js';
 import { awardXp } from '../../services/level-service.js';
+import { validateGameChannel } from '../../utils/game-channel-validator.js';
 
 // Fill-in-the-blank sentences
 const storyQuestions = [
@@ -175,6 +176,11 @@ const storyGame: Command = {
 };
 
 async function playStoryGame(interaction: ChatInputCommandInteraction): Promise<void> {
+  // Check channel permissions
+  if (!(await validateGameChannel(interaction, 'story_game'))) {
+    return;
+  }
+
   const questionCount = interaction.options.getInteger('domande') || 5;
 
   await interaction.deferReply();

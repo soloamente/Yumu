@@ -15,6 +15,7 @@ import { errorEmbed } from '../../utils/embed-builder.js';
 import { gameStatsSchema } from '../../database/schema.js';
 import { awardXp } from '../../services/level-service.js';
 import { registerSelectMenuHandler } from '../../utils/component-handler.js';
+import { validateGameChannel } from '../../utils/game-channel-validator.js';
 
 // Sample vocabulary data
 const vocabData = [
@@ -170,6 +171,11 @@ const vocabQuiz: Command = {
 };
 
 async function startVocabQuiz(interaction: ChatInputCommandInteraction): Promise<void> {
+  // Check channel permissions
+  if (!(await validateGameChannel(interaction, 'vocab_quiz'))) {
+    return;
+  }
+
   const direction = interaction.options.getString('direzione') || 'mixed';
   const category = interaction.options.getString('categoria') || 'all';
   const questionCount = interaction.options.getInteger('domande') || 5;

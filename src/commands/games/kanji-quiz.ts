@@ -12,6 +12,7 @@ import { config } from '../../config.js';
 import { errorEmbed } from '../../utils/embed-builder.js';
 import { gameStatsSchema } from '../../database/schema.js';
 import { awardXp } from '../../services/level-service.js';
+import { validateGameChannel } from '../../utils/game-channel-validator.js';
 
 // Sample kanji data for the quiz
 const kanjiData = [
@@ -135,6 +136,11 @@ const kanjiQuiz: Command = {
 };
 
 async function startQuiz(interaction: ChatInputCommandInteraction): Promise<void> {
+  // Check channel permissions
+  if (!(await validateGameChannel(interaction, 'kanji_quiz'))) {
+    return;
+  }
+
   const quizType = interaction.options.getString('tipo') || 'mixed';
   const jlptLevel = interaction.options.getInteger('livello') || 0;
   const questionCount = interaction.options.getInteger('domande') || 5;

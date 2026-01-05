@@ -13,6 +13,7 @@ import type { Command } from '../../types/index.js';
 import { config } from '../../config.js';
 import { gameStatsSchema } from '../../database/schema.js';
 import { awardXp } from '../../services/level-service.js';
+import { validateGameChannel } from '../../utils/game-channel-validator.js';
 
 // Sample sentences for typing practice
 const sentences = [
@@ -79,6 +80,11 @@ const typingGame: Command = {
 };
 
 async function startTypingGame(interaction: ChatInputCommandInteraction): Promise<void> {
+  // Check channel permissions
+  if (!(await validateGameChannel(interaction, 'typing_game'))) {
+    return;
+  }
+
   const level = interaction.options.getString('livello') || 'all';
   const sentenceCount = interaction.options.getInteger('frasi') || 5;
 

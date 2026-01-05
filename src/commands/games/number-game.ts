@@ -11,6 +11,7 @@ import type { Command } from '../../types/index.js';
 import { config } from '../../config.js';
 import { gameStatsSchema } from '../../database/schema.js';
 import { awardXp } from '../../services/level-service.js';
+import { validateGameChannel } from '../../utils/game-channel-validator.js';
 
 const numberGame: Command = {
   data: new SlashCommandBuilder()
@@ -178,6 +179,11 @@ function generateWrongNumbers(correct: number, difficulty: string, count: number
 }
 
 async function startNumberQuiz(interaction: ChatInputCommandInteraction): Promise<void> {
+  // Check channel permissions
+  if (!(await validateGameChannel(interaction, 'number_game'))) {
+    return;
+  }
+
   const difficulty = interaction.options.getString('difficolta') || 'easy';
   const questionCount = interaction.options.getInteger('domande') || 5;
 

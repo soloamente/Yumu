@@ -10,6 +10,7 @@ import { config } from '../../config.js';
 import { successEmbed, errorEmbed } from '../../utils/embed-builder.js';
 import { checkAdminPermission } from '../../utils/permissions.js';
 import { guildConfigSchema } from '../../database/schema.js';
+import { setGameChannels, getAllGameChannels } from '../../utils/game-channels.js';
 
 const setup: Command = {
   data: new SlashCommandBuilder()
@@ -126,30 +127,22 @@ async function setupWelcome(interaction: ChatInputCommandInteraction): Promise<v
 async function setupGames(interaction: ChatInputCommandInteraction): Promise<void> {
   const channel = interaction.options.getChannel('canale', true);
 
-  // Get current game channels and add the new one
-  const currentConfig = guildConfigSchema.getOrCreate(interaction.guild!.id);
-  let gameChannels: string[] = [];
+  // Get current general game channels and add the new one
+  const allChannels = getAllGameChannels(interaction.guild!.id);
+  const generalChannels = allChannels.general || [];
   
-  try {
-    gameChannels = currentConfig.game_channels 
-      ? JSON.parse(currentConfig.game_channels) 
-      : [];
-  } catch {
-    gameChannels = [];
+  if (!generalChannels.includes(channel.id)) {
+    const newChannels = [...generalChannels, channel.id];
+    setGameChannels(interaction.guild!.id, 'general', newChannels);
   }
 
-  if (!gameChannels.includes(channel.id)) {
-    gameChannels.push(channel.id);
-  }
-
-  guildConfigSchema.update(interaction.guild!.id, {
-    game_channels: JSON.stringify(gameChannels),
-  });
+  const updatedChannels = getAllGameChannels(interaction.guild!.id).general || [];
 
   await interaction.reply({
     embeds: [successEmbed('Canale giochi aggiunto!',
-      `${channel} è stato configurato come canale per i giochi.\n\n` +
-      `**Canali giochi attivi:** ${gameChannels.length}`
+      `${channel} è stato configurato come canale per tutti i giochi.\n\n` +
+      `**Canali giochi generali attivi:** ${updatedChannels.length}\n\n` +
+      `**Nota:** Usa \`/botconfig setgamechannel\` per configurare canali specifici per ogni gioco.`
     )],
   });
 }
@@ -174,15 +167,8 @@ async function setupAdminRole(interaction: ChatInputCommandInteraction): Promise
 
 async function showStatus(interaction: ChatInputCommandInteraction): Promise<void> {
   const guildConfig = guildConfigSchema.getOrCreate(interaction.guild!.id);
-
-  let gameChannels: string[] = [];
-  try {
-    gameChannels = guildConfig.game_channels 
-      ? JSON.parse(guildConfig.game_channels) 
-      : [];
-  } catch {
-    gameChannels = [];
-  }
+  const allGameChannels = getAllGameChannels(interaction.guild!.id);
+  const generalChannels = allGameChannels.general || [];
 
   const embed = new EmbedBuilder()
     .setColor(config.colors.info)
@@ -211,13 +197,13 @@ async function showStatus(interaction: ChatInputCommandInteraction): Promise<voi
         inline: true,
       },
       {
-        name: '🎮 Canali Giochi',
-        value: gameChannels.length > 0 
-          ? gameChannels.map(id => `<#${id}>`).join(', ') 
+        name: '🎮 Canali Giochi (Generali)',
+        value: generalChannels.length > 0 
+          ? generalChannels.map(id => `<#${id}>`).join(', ') 
           : '❌ Non configurati',
       }
     )
-    .setFooter({ text: 'Usa /setup per configurare' })
+    .setFooter({ text: 'Usa /setup o /botconfig setgamechannel per configurare' })
     .setTimestamp();
 
   if (guildConfig.welcome_message) {
