@@ -4,6 +4,7 @@ import {
   EmbedBuilder,
   PermissionFlagsBits,
   ChannelType,
+  TextChannel,
 } from 'discord.js';
 import type { Command, GameType } from '../../types/index.js';
 import { config } from '../../config.js';
@@ -291,7 +292,8 @@ async function setGameChannel(interaction: ChatInputCommandInteraction): Promise
   const currentChannels = getGameChannels(interaction.guild.id, gameType as GameType);
   
   // Add the channel if not already present
-  if (!currentChannels.includes(channel.id)) {
+  const isNewChannel = !currentChannels.includes(channel.id);
+  if (isNewChannel) {
     const newChannels = [...currentChannels, channel.id];
     setGameChannels(interaction.guild.id, gameType, newChannels);
   }
@@ -310,6 +312,22 @@ async function setGameChannel(interaction: ChatInputCommandInteraction): Promise
   const gameName = gameNames[gameType] || gameType;
   const updatedChannels = getGameChannels(interaction.guild.id, gameType as GameType);
 
+  // Send and pin embed in the channel if it's a new channel
+  if (isNewChannel) {
+    try {
+      // Fetch the channel from the guild to ensure we have a TextChannel
+      const textChannel = await interaction.guild.channels.fetch(channel.id);
+      if (textChannel && textChannel instanceof TextChannel) {
+        const infoEmbed = createGameChannelInfoEmbed(gameType, gameName, interaction.guild.id);
+        const message = await textChannel.send({ embeds: [infoEmbed] });
+        await message.pin();
+      }
+    } catch (error) {
+      console.error(`[BotConfig] Error sending/pinning message in channel ${channel.id}:`, error);
+      // Continue anyway - don't fail the command if we can't send/pin
+    }
+  }
+
   await interaction.reply({
     embeds: [successEmbed(
       'Canale configurato!',
@@ -319,6 +337,127 @@ async function setGameChannel(interaction: ChatInputCommandInteraction): Promise
     )],
     ephemeral: true,
   });
+}
+
+/**
+ * Create an embed with game information for the channel
+ */
+function createGameChannelInfoEmbed(
+  gameType: GameType | 'general',
+  gameName: string,
+  guildId: string
+): EmbedBuilder {
+  const embed = new EmbedBuilder()
+    .setColor(config.colors.primary)
+    .setTitle(`🎮 Canale ${gameName}`)
+    .setDescription(
+      `Questo canale è stato configurato per giocare a **${gameName}**!\n\n` +
+      `Usa i comandi qui sotto per iniziare a giocare.`
+    )
+    .setTimestamp();
+
+  const gameInfo: Record<string, { command: string; description: string }> = {
+    shiritori: {
+      command: '/shiritori start',
+      description: 'Inizia una partita di Shiritori - il gioco della catena di parole giapponesi!\n\n' +
+        '**Regole:**\n' +
+        '• Dì una parola che inizia con l\'ultima sillaba della parola precedente\n' +
+        '• Non puoi dire parole che finiscono con ん\n' +
+        '• Non puoi ripetere parole già usate\n\n' +
+        'Usa `/shiritori rules` per vedere le regole complete.',
+    },
+    kanji_quiz: {
+      command: '/kanji quiz',
+      description: 'Quiz sui kanji - impara i caratteri giapponesi!\n\n' +
+        'Scegli tra diversi tipi di quiz:\n' +
+        '• Significato → Kanji\n' +
+        '• Kanji → Significato\n' +
+        '• Lettura → Kanji\n' +
+        '• Misto\n\n' +
+        'Puoi selezionare il livello JLPT e il numero di domande.',
+    },
+    vocab_quiz: {
+      command: '/vocab quiz',
+      description: 'Quiz sul vocabolario giapponese!\n\n' +
+        'Impara nuove parole con quiz interattivi:\n' +
+        '• Giapponese → Italiano\n' +
+        '• Italiano → Giapponese\n' +
+        '• Misto\n\n' +
+        'Scegli tra diverse categorie: saluti, numeri, famiglia, cibo, verbi, aggettivi, luoghi.',
+    },
+    number_game: {
+      command: '/numbers quiz',
+      description: 'Quiz sui numeri giapponesi!\n\n' +
+        'Impara a dire i numeri in giapponese:\n' +
+        '• Facile: 1-10\n' +
+        '• Medio: 1-100\n' +
+        '• Difficile: 1-1000\n' +
+        '• Esperto: 1-10000\n\n' +
+        'Usa `/numbers reference` per vedere la tabella dei numeri.',
+    },
+    word_bomb: {
+      command: '/wordbomb start',
+      description: 'Word Bomb - Trova parole con il carattere dato!\n\n' +
+        '**Come giocare:**\n' +
+        '• Ti verrà mostrato un carattere hiragana\n' +
+        '• Trova una parola giapponese che contiene quel carattere\n' +
+        '• Hai poco tempo per rispondere!\n\n' +
+        'Usa `/wordbomb rules` per vedere le regole complete.',
+    },
+    typing_game: {
+      command: '/typing start',
+      description: 'Pratica la scrittura giapponese!\n\n' +
+        'Migliora la tua velocità di scrittura:\n' +
+        '• Frasi in giapponese da scrivere\n' +
+        '• Livelli JLPT N5, N4\n' +
+        '• Traccia il tempo e gli errori\n\n' +
+        'Perfetto per praticare hiragana, katakana e kanji!',
+    },
+    story_game: {
+      command: '/story play',
+      description: 'Completa le frasi - Riempi gli spazi vuoti!\n\n' +
+        '**Come giocare:**\n' +
+        '• Ti verrà mostrata una frase con uno spazio vuoto\n' +
+        '• Scegli la parola corretta tra le opzioni\n' +
+        '• Impara la grammatica e il vocabolario\n\n' +
+        'Perfetto per imparare il contesto delle parole!',
+    },
+    general: {
+      command: 'Vedi i comandi qui sotto',
+      description: 'Questo canale è configurato per tutti i giochi!\n\n' +
+        '**Giochi disponibili:**\n' +
+        '• `/shiritori start` - Shiritori\n' +
+        '• `/kanji quiz` - Kanji Quiz\n' +
+        '• `/vocab quiz` - Vocab Quiz\n' +
+        '• `/numbers quiz` - Number Game\n' +
+        '• `/wordbomb start` - Word Bomb\n' +
+        '• `/typing start` - Typing Game\n' +
+        '• `/story play` - Story Game\n\n' +
+        'Usa `/botconfig listgamechannels` per vedere tutti i canali configurati.',
+    },
+  };
+
+  const info = gameInfo[gameType] || gameInfo.general;
+
+  embed.addFields({
+    name: '🎯 Come iniziare',
+    value: info.command,
+    inline: false,
+  });
+
+  embed.addFields({
+    name: '📖 Descrizione',
+    value: info.description,
+    inline: false,
+  });
+
+  if (gameType !== 'general') {
+    embed.setFooter({ text: '頑張って! (Ganbatte!) - Buon divertimento!' });
+  } else {
+    embed.setFooter({ text: 'Usa /botconfig setgamechannel per configurare canali specifici per ogni gioco' });
+  }
+
+  return embed;
 }
 
 async function removeGameChannelCommand(interaction: ChatInputCommandInteraction): Promise<void> {
