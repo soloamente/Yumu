@@ -469,6 +469,9 @@ async function showVocabList(interaction: ChatInputCommandInteraction): Promise<
       return;
     }
 
+    if (!selectInteraction.isStringSelectMenu()) {
+      return;
+    }
     const selectedCategory = selectInteraction.values[0];
     const vocabInSelectedCategory = vocabData.filter(v => v.category === selectedCategory);
 
@@ -526,10 +529,12 @@ async function showVocabList(interaction: ChatInputCommandInteraction): Promise<
       .setDescription(vocabListUpdated || 'Nessun vocabolo trovato')
       .setFooter({ text: `${vocabInSelectedCategory.length} vocaboli • Usa il menu per cambiare categoria` });
 
-    await selectInteraction.update({ 
-      embeds: [updatedEmbed],
-      components: [updatedRow],
-    });
+    if (selectInteraction.isStringSelectMenu()) {
+      await selectInteraction.update({ 
+        embeds: [updatedEmbed],
+        components: [updatedRow],
+      });
+    }
   });
 
   // Set up collector to clean up after timeout

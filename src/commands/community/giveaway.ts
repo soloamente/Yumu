@@ -209,11 +209,17 @@ async function startGiveaway(interaction: ChatInputCommandInteraction): Promise<
 
     modal.addComponents(prizeRow, durationRow, winnersRow);
 
-    await buttonInteraction.showModal(modal);
+    if (buttonInteraction.isButton()) {
+      await buttonInteraction.showModal(modal);
+    }
   });
 
   // Register modal handler
   registerModalHandler(`giveaway_modal_${interaction.user.id}`, async (modalInteraction) => {
+    if (!modalInteraction.isModalSubmit()) {
+      return;
+    }
+
     if (modalInteraction.user.id !== interaction.user.id) {
       await modalInteraction.reply({
         content: '⚠️ Solo chi ha eseguito il comando può creare il giveaway.',

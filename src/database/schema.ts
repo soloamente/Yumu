@@ -97,6 +97,13 @@ export const userSchema = {
       [id]
     );
     return result?.rank || 0;
+  },
+
+  /**
+   * Get all users
+   */
+  getAll(): User[] {
+    return db.query<User>('SELECT * FROM users');
   }
 };
 

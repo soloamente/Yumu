@@ -2,7 +2,6 @@ import {
   ButtonInteraction,
   StringSelectMenuInteraction,
   ModalSubmitInteraction,
-  ComponentType,
 } from 'discord.js';
 import { handleGiveawayEntry } from '../services/giveaway-service.js';
 

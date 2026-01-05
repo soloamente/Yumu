@@ -5,9 +5,10 @@ import {
   ActionRowBuilder,
   StringSelectMenuBuilder,
   StringSelectMenuOptionBuilder,
+  StringSelectMenuInteraction,
   ComponentType,
 } from 'discord.js';
-import type { Command } from '../../types/index.js';
+import type { Command, User } from '../../types/index.js';
 import { config } from '../../config.js';
 import { userSchema, gameStatsSchema } from '../../database/schema.js';
 import { 
@@ -145,21 +146,10 @@ async function showGamesLeaderboard(interaction: ChatInputCommandInteraction): P
     story_game: 'Story Game',
   };
 
-  const gameEmojis: Record<string, string> = {
-    all: '🎮',
-    shiritori: '🎌',
-    kanji_quiz: '📝',
-    vocab_quiz: '📚',
-    number_game: '🔢',
-    word_bomb: '💣',
-    typing_game: '⌨️',
-    story_game: '📖',
-  };
-
   // Get all users with game stats
   const allUsers = userSchema.getAll();
   const usersWithStats = allUsers
-    .map(user => {
+    .map((user: User) => {
       const stats = gameStatsSchema.getAllForUser(user.id);
       const relevantStats = gameType === 'all'
         ? stats
@@ -174,8 +164,8 @@ async function showGamesLeaderboard(interaction: ChatInputCommandInteraction): P
         totalPlayed,
       };
     })
-    .filter(u => u.totalPlayed > 0)
-    .sort((a, b) => b.totalWins - a.totalWins)
+    .filter((u: { totalPlayed: number }) => u.totalPlayed > 0)
+    .sort((a: { totalWins: number }, b: { totalWins: number }) => b.totalWins - a.totalWins)
     .slice(0, 10);
 
   if (usersWithStats.length === 0) {
@@ -192,7 +182,7 @@ async function showGamesLeaderboard(interaction: ChatInputCommandInteraction): P
   const title = `🎮 Classifica - ${gameNames[gameType] || gameType}`;
 
   const leaderboardEntries = await Promise.all(
-    usersWithStats.map(async (user, index) => {
+    usersWithStats.map(async (user: User & { totalWins: number; totalPlayed: number }, index: number) => {
       const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `**${index + 1}.**`;
       
       let displayName = user.username;
@@ -284,6 +274,9 @@ async function showGamesLeaderboard(interaction: ChatInputCommandInteraction): P
       return;
     }
 
+    if (!selectInteraction.isStringSelectMenu()) {
+      return;
+    }
     const selectedGame = selectInteraction.values[0];
     await showGamesLeaderboardWithType(selectInteraction, selectedGame, message.id);
   });
@@ -305,7 +298,7 @@ async function showGamesLeaderboard(interaction: ChatInputCommandInteraction): P
 async function showGamesLeaderboardWithType(
   interaction: StringSelectMenuInteraction,
   gameType: string,
-  originalMessageId: string
+  _originalMessageId: string
 ): Promise<void> {
   const gameNames: Record<string, string> = {
     all: 'Tutti i Giochi',
@@ -321,7 +314,7 @@ async function showGamesLeaderboardWithType(
   // Get all users with game stats
   const allUsers = userSchema.getAll();
   const usersWithStats = allUsers
-    .map(user => {
+    .map((user: User) => {
       const stats = gameStatsSchema.getAllForUser(user.id);
       const relevantStats = gameType === 'all'
         ? stats
@@ -336,14 +329,14 @@ async function showGamesLeaderboardWithType(
         totalPlayed,
       };
     })
-    .filter(u => u.totalPlayed > 0)
-    .sort((a, b) => b.totalWins - a.totalWins)
+    .filter((u: { totalPlayed: number }) => u.totalPlayed > 0)
+    .sort((a: { totalWins: number }, b: { totalWins: number }) => b.totalWins - a.totalWins)
     .slice(0, 10);
 
   const title = `🎮 Classifica - ${gameNames[gameType] || gameType}`;
 
   const leaderboardEntries = await Promise.all(
-    usersWithStats.map(async (user, index) => {
+    usersWithStats.map(async (user: User & { totalWins: number; totalPlayed: number }, index: number) => {
       const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `**${index + 1}.**`;
       
       let displayName = user.username;
