@@ -318,7 +318,7 @@ async function setGameChannel(interaction: ChatInputCommandInteraction): Promise
       // Fetch the channel from the guild to ensure we have a TextChannel
       const textChannel = await interaction.guild.channels.fetch(channel.id);
       if (textChannel && textChannel instanceof TextChannel) {
-        const infoEmbed = createGameChannelInfoEmbed(gameType, gameName, interaction.guild.id);
+        const infoEmbed = createGameChannelInfoEmbed(gameType, gameName);
         const message = await textChannel.send({ embeds: [infoEmbed] });
         await message.pin();
       }
@@ -344,8 +344,7 @@ async function setGameChannel(interaction: ChatInputCommandInteraction): Promise
  */
 function createGameChannelInfoEmbed(
   gameType: GameType | 'general',
-  gameName: string,
-  guildId: string
+  gameName: string
 ): EmbedBuilder {
   const embed = new EmbedBuilder()
     .setColor(config.colors.primary)
