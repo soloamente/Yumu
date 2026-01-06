@@ -193,10 +193,10 @@ async function startQuiz(interaction: ChatInputCommandInteraction): Promise<void
     const allOptions = [correctAnswer, ...wrongAnswers].sort(() => Math.random() - 0.5);
     const correctIndex = allOptions.indexOf(correctAnswer);
 
-    // Create buttons
+    // Create buttons with unique IDs per question
     const buttons = allOptions.map((opt, idx) =>
       new ButtonBuilder()
-        .setCustomId(`kanji_${idx}`)
+        .setCustomId(`kanji_${i}_${idx}_${Date.now()}`)
         .setLabel(opt)
         .setStyle(ButtonStyle.Primary)
     );
@@ -219,15 +219,26 @@ async function startQuiz(interaction: ChatInputCommandInteraction): Promise<void
       components: [row],
     });
 
+    // Small delay to ensure message is ready for component collector
+    await new Promise(resolve => setTimeout(resolve, 100));
+
     // Wait for answer
     try {
       const response = await message.awaitMessageComponent({
         componentType: ComponentType.Button,
-        filter: (btn) => btn.user.id === interaction.user.id,
+        filter: (btn) => {
+          // Verify it's the right user and the customId matches our format
+          if (btn.user.id !== interaction.user.id) return false;
+          const customIdParts = btn.customId.split('_');
+          // Check if it's a valid customId for this question (should start with kanji_)
+          return customIdParts[0] === 'kanji' && parseInt(customIdParts[1]) === i;
+        },
         time: 15000,
       });
 
-      const selectedIndex = parseInt(response.customId.split('_')[1]);
+      // Extract button index from customId (format: kanji_questionIndex_buttonIndex_timestamp)
+      const customIdParts = response.customId.split('_');
+      const selectedIndex = parseInt(customIdParts[2]); // Button index is the 3rd part (index 2)
       const isCorrect = selectedIndex === correctIndex;
 
       if (isCorrect) {
@@ -259,17 +270,35 @@ async function startQuiz(interaction: ChatInputCommandInteraction): Promise<void
           `📝 Significati: ${currentKanji.meanings.join(', ')}`
         );
 
-      await response.update({
-        embeds: [resultEmbed],
-        components: [resultRow],
-      });
+      // Update the interaction - use update() which is more reliable for button interactions
+      try {
+        await response.update({
+          embeds: [resultEmbed],
+          components: [resultRow],
+        });
+      } catch (updateError) {
+        // If update fails (e.g., interaction expired), defer and edit the original message
+        try {
+          await response.deferUpdate();
+          await interaction.editReply({
+            embeds: [resultEmbed],
+            components: [resultRow],
+          });
+        } catch {
+          // Last resort: edit the original message directly
+          await interaction.editReply({
+            embeds: [resultEmbed],
+            components: [resultRow],
+          });
+        }
+      }
 
       // Wait a bit before next question
       if (i < quizKanji.length - 1) {
         await new Promise(resolve => setTimeout(resolve, 2000));
       }
-    } catch {
-      // Timeout
+    } catch (error) {
+      // Timeout or other error
       const timeoutEmbed = EmbedBuilder.from(embed)
         .setColor(config.colors.warning)
         .setDescription(
