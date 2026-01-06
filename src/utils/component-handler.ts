@@ -81,6 +81,17 @@ export async function handleButton(interaction: ButtonInteraction): Promise<void
     return;
   }
 
+  // Check for game buttons - these are handled by awaitMessageComponent()
+  // The collector will handle the interaction, so we don't need to respond here
+  // This prevents the "component no longer valid" message from showing
+  const gameButtonPrefixes = ['kanji_', 'vocab_', 'num_', 'typing_', 'story_'];
+  if (gameButtonPrefixes.some(prefix => customId.startsWith(prefix))) {
+    // This interaction is being handled by awaitMessageComponent() in the game
+    // The collector will process it, so we just return without responding
+    // This prevents the error message from appearing
+    return;
+  }
+
   // Default: acknowledge but do nothing
   await interaction.reply({
     content: '⚠️ Questo componente non è più valido.',
