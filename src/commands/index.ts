@@ -25,6 +25,7 @@ import studyTracker from './study/study-tracker.js';
 // Admin
 import setup from './admin/setup.js';
 import botConfig from './admin/config.js';
+import xpManage from './admin/xpmanage.js';
 
 /**
  * All available commands
@@ -49,6 +50,7 @@ export const commands: Command[] = [
   // Admin
   setup,
   botConfig,
+  xpManage,
 ];
 
 /**

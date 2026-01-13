@@ -49,6 +49,45 @@ export const userSchema = {
   },
 
   /**
+   * Set user XP directly (recalculates level)
+   */
+  setXp(id: string, xp: number): User {
+    const user = db.queryOne<User>('SELECT * FROM users WHERE id = ?', [id]);
+    if (!user) throw new Error('User not found');
+
+    // Ensure XP is not negative
+    const newXp = Math.max(0, xp);
+    const newLevel = Math.floor(Math.sqrt(newXp / 100)) + 1;
+
+    db.run(
+      'UPDATE users SET xp = ?, level = ? WHERE id = ?',
+      [newXp, newLevel, id]
+    );
+
+    return { ...user, xp: newXp, level: newLevel };
+  },
+
+  /**
+   * Set user level directly (calculates required XP)
+   */
+  setLevel(id: string, level: number): User {
+    const user = db.queryOne<User>('SELECT * FROM users WHERE id = ?', [id]);
+    if (!user) throw new Error('User not found');
+
+    // Ensure level is at least 1
+    const newLevel = Math.max(1, level);
+    // Calculate XP needed for this level: xp = (level - 1)^2 * 100
+    const newXp = Math.pow(newLevel - 1, 2) * 100;
+
+    db.run(
+      'UPDATE users SET xp = ?, level = ? WHERE id = ?',
+      [newXp, newLevel, id]
+    );
+
+    return { ...user, xp: newXp, level: newLevel };
+  },
+
+  /**
    * Update study streak
    */
   updateStreak(id: string): void {
