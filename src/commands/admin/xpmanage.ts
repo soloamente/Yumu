@@ -1,11 +1,10 @@
 import {
   SlashCommandBuilder,
   ChatInputCommandInteraction,
-  EmbedBuilder,
   PermissionFlagsBits,
+  MessageFlags,
 } from 'discord.js';
 import type { Command } from '../../types/index.js';
-import { config } from '../../config.js';
 import { successEmbed, errorEmbed } from '../../utils/embed-builder.js';
 import { checkAdminPermission } from '../../utils/permissions.js';
 import { userSchema } from '../../database/schema.js';
@@ -78,7 +77,7 @@ const xpManage: Command = {
     if (!interaction.guild) {
       await interaction.reply({
         embeds: [errorEmbed('Errore', 'Questo comando può essere usato solo in un server.')],
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }
@@ -138,12 +137,12 @@ async function addXp(interaction: ChatInputCommandInteraction): Promise<void> {
         `• Livello: ${updatedUser.level} ${updatedUser.level > oldLevel ? '⬆️' : updatedUser.level < oldLevel ? '⬇️' : ''}`
     );
 
-    await interaction.reply({ embeds: [embed], ephemeral: true });
+    await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
   } catch (error) {
     console.error('[XPManage] Error adding XP:', error);
     await interaction.reply({
       embeds: [errorEmbed('Errore', 'Si è verificato un errore durante la modifica dell\'XP.')],
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 }
@@ -187,7 +186,7 @@ async function setLevel(interaction: ChatInputCommandInteraction): Promise<void>
         `• Livello: ${updatedUser.level} ${updatedUser.level > oldLevel ? '⬆️' : updatedUser.level < oldLevel ? '⬇️' : ''}`
     );
 
-    await interaction.reply({ embeds: [embed], ephemeral: true });
+    await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
   } catch (error) {
     console.error('[XPManage] Error setting level:', error);
     await interaction.reply({
@@ -236,7 +235,7 @@ async function setXp(interaction: ChatInputCommandInteraction): Promise<void> {
         `• Livello: ${updatedUser.level} ${updatedUser.level > oldLevel ? '⬆️' : updatedUser.level < oldLevel ? '⬇️' : ''}`
     );
 
-    await interaction.reply({ embeds: [embed], ephemeral: true });
+    await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
   } catch (error) {
     console.error('[XPManage] Error setting XP:', error);
     await interaction.reply({
