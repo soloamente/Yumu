@@ -170,11 +170,21 @@ export async function endGiveaway(client: Client, giveawayId: number): Promise<s
   // Mark as ended
   giveawaySchema.end(giveawayId);
 
-  // Update message
+  // Fetch channel once for both updating message and announcing
+  let channel: TextChannel | null = null;
   try {
-    const channel = await client.channels.fetch(giveaway.channel_id);
-    if (channel && channel.isTextBased()) {
-      const message = await (channel as TextChannel).messages.fetch(giveaway.message_id);
+    const fetchedChannel = await client.channels.fetch(giveaway.channel_id);
+    if (fetchedChannel && fetchedChannel.isTextBased()) {
+      channel = fetchedChannel as TextChannel;
+    }
+  } catch (error) {
+    console.error(`[Giveaway] Error fetching channel for giveaway #${giveawayId}:`, error);
+  }
+
+  // Update message
+  if (channel) {
+    try {
+      const message = await channel.messages.fetch(giveaway.message_id);
       
       // Update embed
       const embed = createGiveawayEmbed(
@@ -209,17 +219,29 @@ export async function endGiveaway(client: Client, giveawayId: number): Promise<s
       );
 
       await message.edit({ embeds: [embed], components: [row] });
+    } catch (error) {
+      console.error(`[Giveaway] Error updating message for giveaway #${giveawayId}:`, error);
+    }
+  }
 
-      // Announce winners
+  // Announce winners (separate try-catch to ensure it always runs, even if message update failed)
+  if (channel) {
+    try {
+      // Always announce, whether there are winners or not
       if (winners.length > 0) {
         const winnerMentions = winners.map(id => `<@${id}>`).join(', ');
-        await (channel as TextChannel).send({
+        await channel.send({
           content: `🎊 Congratulazioni ${winnerMentions}! Avete vinto **${giveaway.prize}**! 🎉`,
         });
+      } else {
+        // Announce when there are no participants
+        await channel.send({
+          content: `🎉 Il giveaway per **${giveaway.prize}** è terminato, ma non ci sono stati partecipanti. 😢`,
+        });
       }
+    } catch (error) {
+      console.error(`[Giveaway] Error announcing winners for giveaway #${giveawayId}:`, error);
     }
-  } catch (error) {
-    console.error(`[Giveaway] Error ending giveaway #${giveawayId}:`, error);
   }
 
   console.log(`[Giveaway] Ended giveaway #${giveawayId}, winners: ${winners.join(', ') || 'none'}`);
