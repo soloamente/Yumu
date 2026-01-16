@@ -124,10 +124,7 @@ export async function createGiveaway(
     giveawayTimers.set(giveawayId, mainTimer);
   }
 
-  // Store the timer so we can clear it if needed
-  giveawayTimers.set(giveawayId, timer);
-
-  console.log(`[Giveaway] Created giveaway #${giveawayId}: ${prize} (ends in ${duration / 1000}s)`);
+  console.log(`[Giveaway] Created giveaway #${giveawayId}: ${prize} (ends in ${Math.round(timeUntilEnd / 1000)}s)`);
   return giveawayId;
 }
 
