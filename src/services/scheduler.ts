@@ -1,7 +1,7 @@
 import cron from 'node-cron';
 import { Client } from 'discord.js';
 import { config } from '../config.js';
-import { giveawaySchema, eventSchema, guildConfigSchema } from '../database/schema.js';
+import { eventSchema, guildConfigSchema } from '../database/schema.js';
 import { db } from '../database/index.js';
 import { sendDailyWord } from './daily-word-service.js';
 import { endGiveaway, scheduleActiveGiveaways } from './giveaway-service.js';

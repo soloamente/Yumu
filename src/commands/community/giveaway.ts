@@ -10,6 +10,7 @@ import {
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
+  Client,
 } from 'discord.js';
 import type { Command } from '../../types/index.js';
 import { config } from '../../config.js';
@@ -135,7 +136,7 @@ async function startGiveaway(interaction: ChatInputCommandInteraction): Promise<
 
   // If all required fields are provided via command, proceed directly
   if (prize && durationStr) {
-    await createGiveawayDirectly(interaction, prize, durationStr, winnersCount, targetChannel);
+    await createGiveawayDirectly(interaction, prize, durationStr, winnersCount, targetChannel, interaction.client);
     return;
   }
 
@@ -243,12 +244,16 @@ async function startGiveaway(interaction: ChatInputCommandInteraction): Promise<
 
     await modalInteraction.deferReply({ ephemeral: true });
 
+    // Get client from modalInteraction - modal interactions have client property
+    const client = modalInteraction.client;
+
     await createGiveawayDirectly(
-      modalInteraction as unknown as ChatInputCommandInteraction,
+      modalInteraction,
       prize,
       durationStr,
       winnersCount,
-      targetChannel
+      targetChannel,
+      client
     );
   });
 }
@@ -257,11 +262,12 @@ async function startGiveaway(interaction: ChatInputCommandInteraction): Promise<
  * Helper function to create giveaway directly
  */
 async function createGiveawayDirectly(
-  interaction: ChatInputCommandInteraction | { user: { id: string }; editReply: (options: unknown) => Promise<unknown> },
+  interaction: ChatInputCommandInteraction | { user: { id: string }; editReply: (options: unknown) => Promise<unknown>; client?: Client },
   prize: string,
   durationStr: string,
   winnersCount: number,
-  targetChannel: unknown
+  targetChannel: unknown,
+  client?: Client
 ): Promise<void> {
   // Parse duration
   const duration = parseDuration(durationStr);
@@ -282,13 +288,18 @@ async function createGiveawayDirectly(
 
   try {
     const userId = 'user' in interaction ? interaction.user.id : (interaction as { user: { id: string } }).user.id;
+    // Get client from parameter, interaction, or throw error if not available
+    const giveawayClient = client || ('client' in interaction ? interaction.client : undefined);
+    if (!giveawayClient) {
+      throw new Error('Client is required to create giveaway');
+    }
     const giveawayId = await createGiveaway(
       targetChannel as TextChannel,
       prize,
       duration,
       winnersCount,
       userId,
-      interaction.client
+      giveawayClient
     );
 
     const endsAt = new Date(Date.now() + duration);
