@@ -220,10 +220,13 @@ export const giveawaySchema = {
 
   /**
    * Get active giveaways
+   * Note: ends_at is stored as ISO string, so we use Unix timestamp for reliable comparison
    */
   getActive(): Giveaway[] {
     return db.query<Giveaway>(
-      'SELECT * FROM giveaways WHERE ended = 0 AND ends_at > datetime("now")'
+      `SELECT * FROM giveaways 
+       WHERE ended = 0 
+       AND strftime('%s', REPLACE(REPLACE(ends_at, 'T', ' '), '.000Z', '')) > strftime('%s', 'now')`
     );
   },
 
@@ -236,10 +239,16 @@ export const giveawaySchema = {
 
   /**
    * Get giveaways that should end
+   * Note: ends_at is stored as ISO string (e.g., "2024-01-01T12:00:00.000Z")
+   * We use strftime('%s', ...) to convert to Unix timestamp for reliable comparison
    */
   getEndingSoon(): Giveaway[] {
+    // Convert ISO string to SQLite datetime format, then to Unix timestamp
+    // SQLite can parse ISO 8601 format if we remove milliseconds and timezone info
     return db.query<Giveaway>(
-      'SELECT * FROM giveaways WHERE ended = 0 AND ends_at <= datetime("now")'
+      `SELECT * FROM giveaways 
+       WHERE ended = 0 
+       AND strftime('%s', REPLACE(REPLACE(ends_at, 'T', ' '), '.000Z', '')) <= strftime('%s', 'now')`
     );
   },
 

@@ -55,11 +55,30 @@ async function runDailyWordTask(client: Client): Promise<void> {
 
 /**
  * Run giveaway checker
+ * Also checks giveaways manually using JavaScript date comparison as a fallback
+ * to handle any edge cases where SQLite date parsing might fail
  */
 async function runGiveawayChecker(client: Client): Promise<void> {
   try {
-    const endingGiveaways = giveawaySchema.getEndingSoon();
+    // First try SQLite query
+    let endingGiveaways = giveawaySchema.getEndingSoon();
 
+    // Fallback: Also check all active giveaways using JavaScript date comparison
+    // This ensures we don't miss any giveaways due to date format issues
+    const now = new Date();
+    const allActiveGiveaways = giveawaySchema.getActive();
+    
+    for (const giveaway of allActiveGiveaways) {
+      const endsAt = new Date(giveaway.ends_at);
+      if (endsAt <= now && !giveaway.ended) {
+        // Make sure we don't process the same giveaway twice
+        if (!endingGiveaways.find(g => g.id === giveaway.id)) {
+          endingGiveaways.push(giveaway);
+        }
+      }
+    }
+
+    // Process all ending giveaways
     for (const giveaway of endingGiveaways) {
       await endGiveaway(client, giveaway.id);
     }
