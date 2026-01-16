@@ -57,12 +57,72 @@ export async function createGiveaway(
     hostId
   );
 
-  // Set up timer to end giveaway exactly when it expires
-  // This ensures immediate ending without polling delays
-  const timer = setTimeout(async () => {
-    giveawayTimers.delete(giveawayId);
-    await endGiveaway(client, giveawayId);
-  }, duration);
+  // Calculate the exact time remaining based on endsAt (more accurate than using duration)
+  // This accounts for any delays during message sending and database operations
+  const endsAtDate = new Date(endsAt);
+  const now = new Date();
+  const timeUntilEnd = endsAtDate.getTime() - now.getTime();
+
+  // If the giveaway should have already ended, end it immediately
+  if (timeUntilEnd <= 0) {
+    endGiveaway(client, giveawayId).catch(error => {
+      console.error(`[Giveaway] Error ending giveaway #${giveawayId} immediately:`, error);
+    });
+    return giveawayId;
+  }
+
+  // Set up timer to end giveaway when it expires
+  // For precision, check every second in the last 20 seconds
+  const checkSecondsBeforeEnd = 20;
+  
+  if (timeUntilEnd <= checkSecondsBeforeEnd * 1000) {
+    // Ending soon - check every second for precision
+    const checkInterval = setInterval(async () => {
+      const checkNow = new Date();
+      const checkEndsAt = new Date(endsAt);
+      const checkRemaining = checkEndsAt.getTime() - checkNow.getTime();
+      
+      if (checkRemaining <= 0) {
+        clearInterval(checkInterval);
+        const existingTimer = giveawayTimers.get(giveawayId);
+        if (existingTimer) {
+          clearTimeout(existingTimer);
+        }
+        giveawayTimers.delete(giveawayId);
+        await endGiveaway(client, giveawayId);
+      }
+    }, 1000);
+    
+    // Store interval ID (we'll store it as the timer)
+    giveawayTimers.set(giveawayId, checkInterval as unknown as NodeJS.Timeout);
+    
+    // Clear the interval after the giveaway ends
+    setTimeout(() => clearInterval(checkInterval), timeUntilEnd + 2000);
+  } else {
+    // Ending later - use a main timer that switches to second-by-second checking in the last 20 seconds
+    const mainTimer = setTimeout(async () => {
+      // Start second-by-second checking for precision
+      const preciseCheck = setInterval(async () => {
+        const checkNow = new Date();
+        const checkEndsAt = new Date(endsAt);
+        const checkRemaining = checkEndsAt.getTime() - checkNow.getTime();
+        
+        if (checkRemaining <= 0) {
+          clearInterval(preciseCheck);
+          giveawayTimers.delete(giveawayId);
+          await endGiveaway(client, giveawayId);
+        }
+      }, 1000);
+      
+      // Replace main timer with precise check
+      giveawayTimers.set(giveawayId, preciseCheck as unknown as NodeJS.Timeout);
+      
+      // Clear after it ends
+      setTimeout(() => clearInterval(preciseCheck), checkSecondsBeforeEnd * 1000 + 2000);
+    }, Math.max(0, timeUntilEnd - checkSecondsBeforeEnd * 1000));
+    
+    giveawayTimers.set(giveawayId, mainTimer);
+  }
 
   // Store the timer so we can clear it if needed
   giveawayTimers.set(giveawayId, timer);
@@ -172,9 +232,11 @@ export async function handleGiveawayEntry(interaction: ButtonInteraction): Promi
  */
 export async function endGiveaway(client: Client, giveawayId: number): Promise<string[]> {
   // Clear the timer if it exists (in case giveaway is ended manually)
+  // The timer could be a setTimeout or setInterval
   const timer = giveawayTimers.get(giveawayId);
   if (timer) {
     clearTimeout(timer);
+    clearInterval(timer as unknown as NodeJS.Timeout);
     giveawayTimers.delete(giveawayId);
   }
 
