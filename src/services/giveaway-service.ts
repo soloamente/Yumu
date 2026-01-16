@@ -11,14 +11,22 @@ import { config } from '../config.js';
 import { giveawaySchema } from '../database/schema.js';
 
 /**
+ * Map to store active giveaway timers
+ * Key: giveawayId, Value: NodeJS.Timeout
+ */
+const giveawayTimers = new Map<number, NodeJS.Timeout>();
+
+/**
  * Create a new giveaway
+ * @param client Discord client instance (needed for timer to end giveaway)
  */
 export async function createGiveaway(
   channel: TextChannel,
   prize: string,
   duration: number, // in milliseconds
   winnersCount: number,
-  hostId: string
+  hostId: string,
+  client: Client
 ): Promise<number> {
   const endsAt = new Date(Date.now() + duration).toISOString();
 
@@ -49,7 +57,17 @@ export async function createGiveaway(
     hostId
   );
 
-  console.log(`[Giveaway] Created giveaway #${giveawayId}: ${prize}`);
+  // Set up timer to end giveaway exactly when it expires
+  // This ensures immediate ending without polling delays
+  const timer = setTimeout(async () => {
+    giveawayTimers.delete(giveawayId);
+    await endGiveaway(client, giveawayId);
+  }, duration);
+
+  // Store the timer so we can clear it if needed
+  giveawayTimers.set(giveawayId, timer);
+
+  console.log(`[Giveaway] Created giveaway #${giveawayId}: ${prize} (ends in ${duration / 1000}s)`);
   return giveawayId;
 }
 
@@ -150,8 +168,16 @@ export async function handleGiveawayEntry(interaction: ButtonInteraction): Promi
 
 /**
  * End a giveaway and pick winners
+ * This also clears the timer if it exists
  */
 export async function endGiveaway(client: Client, giveawayId: number): Promise<string[]> {
+  // Clear the timer if it exists (in case giveaway is ended manually)
+  const timer = giveawayTimers.get(giveawayId);
+  if (timer) {
+    clearTimeout(timer);
+    giveawayTimers.delete(giveawayId);
+  }
+
   const giveaway = giveawaySchema.getById(giveawayId);
   if (!giveaway || giveaway.ended) {
     return [];
@@ -281,4 +307,38 @@ export async function rerollGiveaway(client: Client, giveawayId: number): Promis
   }
 
   return winners;
+}
+
+/**
+ * Schedule timers for all active giveaways
+ * Call this on bot startup to restore timers for giveaways that were active before restart
+ */
+export function scheduleActiveGiveaways(client: Client): void {
+  const activeGiveaways = giveawaySchema.getActive();
+  const now = new Date();
+
+  for (const giveaway of activeGiveaways) {
+    // Skip if already has a timer
+    if (giveawayTimers.has(giveaway.id)) continue;
+
+    const endsAt = new Date(giveaway.ends_at);
+    const timeUntilEnd = endsAt.getTime() - now.getTime();
+
+    // Only schedule if the giveaway hasn't already ended
+    if (timeUntilEnd > 0) {
+      const timer = setTimeout(async () => {
+        giveawayTimers.delete(giveaway.id);
+        await endGiveaway(client, giveaway.id);
+      }, timeUntilEnd);
+
+      giveawayTimers.set(giveaway.id, timer);
+      console.log(`[Giveaway] Scheduled timer for giveaway #${giveaway.id} (ends in ${Math.round(timeUntilEnd / 1000)}s)`);
+    } else {
+      // Giveaway should have ended but didn't - end it immediately
+      console.log(`[Giveaway] Giveaway #${giveaway.id} should have ended, ending now...`);
+      endGiveaway(client, giveaway.id).catch(error => {
+        console.error(`[Giveaway] Error ending overdue giveaway #${giveaway.id}:`, error);
+      });
+    }
+  }
 }

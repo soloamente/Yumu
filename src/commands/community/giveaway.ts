@@ -287,7 +287,8 @@ async function createGiveawayDirectly(
       prize,
       duration,
       winnersCount,
-      userId
+      userId,
+      interaction.client
     );
 
     const endsAt = new Date(Date.now() + duration);
