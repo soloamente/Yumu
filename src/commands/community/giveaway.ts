@@ -1,6 +1,7 @@
 import {
   SlashCommandBuilder,
   ChatInputCommandInteraction,
+  ModalSubmitInteraction,
   EmbedBuilder,
   PermissionFlagsBits,
   TextChannel,
@@ -262,7 +263,7 @@ async function startGiveaway(interaction: ChatInputCommandInteraction): Promise<
  * Helper function to create giveaway directly
  */
 async function createGiveawayDirectly(
-  interaction: ChatInputCommandInteraction | { user: { id: string }; editReply: (options: unknown) => Promise<unknown>; client?: Client },
+  interaction: ChatInputCommandInteraction | ModalSubmitInteraction | { user: { id: string }; editReply: (options: unknown) => Promise<unknown>; client?: Client },
   prize: string,
   durationStr: string,
   winnersCount: number,
