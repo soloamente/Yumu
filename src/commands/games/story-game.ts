@@ -246,7 +246,8 @@ async function playStoryGame(interaction: ChatInputCommandInteraction): Promise<
 
       if (isCorrect) {
         correctAnswers++;
-        awardXp(interaction.user.id, interaction.user.username, config.xp.perQuizCorrect);
+        // XP system disabled - no longer awarding XP
+        // awardXp(interaction.user.id, interaction.user.username, config.xp.perQuizCorrect);
       }
 
       // Show result
@@ -333,11 +334,12 @@ async function playStoryGame(interaction: ChatInputCommandInteraction): Promise<
       `**${grade}**\n\n` +
       `Hai completato correttamente **${correctAnswers}/${totalQuestions}** frasi (${percentage}%)`
     )
-    .addFields({
-      name: '📊 XP Guadagnati',
-      value: `+${correctAnswers * config.xp.perQuizCorrect} XP`,
-      inline: true,
-    })
+    // XP system disabled - removed XP display
+    // .addFields({
+    //   name: '📊 XP Guadagnati',
+    //   value: `+${correctAnswers * config.xp.perQuizCorrect} XP`,
+    //   inline: true,
+    // })
     .setTimestamp();
 
   await interaction.editReply({

@@ -262,7 +262,8 @@ async function startNumberQuiz(interaction: ChatInputCommandInteraction): Promis
 
       if (isCorrect) {
         correctAnswers++;
-        awardXp(interaction.user.id, interaction.user.username, config.xp.perQuizCorrect);
+        // XP system disabled - no longer awarding XP
+        // awardXp(interaction.user.id, interaction.user.username, config.xp.perQuizCorrect);
       }
 
       const resultButtons = buttons.map((btn, idx) => {
@@ -335,11 +336,12 @@ async function startNumberQuiz(interaction: ChatInputCommandInteraction): Promis
     .setDescription(
       `Hai risposto correttamente a **${correctAnswers}/${questionCount}** domande (${percentage}%)`
     )
-    .addFields({
-      name: '📊 XP Guadagnati',
-      value: `+${correctAnswers * config.xp.perQuizCorrect} XP`,
-      inline: true,
-    })
+    // XP system disabled - removed XP display
+    // .addFields({
+    //   name: '📊 XP Guadagnati',
+    //   value: `+${correctAnswers * config.xp.perQuizCorrect} XP`,
+    //   inline: true,
+    // })
     .setTimestamp();
 
   await interaction.editReply({

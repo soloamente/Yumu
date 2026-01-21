@@ -14,8 +14,8 @@ const messageCreate: Event = {
     // Ignore bots and DMs
     if (message.author.bot || !message.guild) return;
 
-    // Award XP for messages (with cooldown)
-    await awardMessageXp(message);
+    // XP system disabled - no longer awarding XP for messages
+    // await awardMessageXp(message);
 
     // Check if message is part of an active game
     await handleGameMessage(message);

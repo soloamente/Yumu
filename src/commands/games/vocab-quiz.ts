@@ -259,7 +259,8 @@ async function startVocabQuiz(interaction: ChatInputCommandInteraction): Promise
 
       if (isCorrect) {
         correctAnswers++;
-        awardXp(interaction.user.id, interaction.user.username, config.xp.perQuizCorrect);
+        // XP system disabled - no longer awarding XP
+        // awardXp(interaction.user.id, interaction.user.username, config.xp.perQuizCorrect);
       }
 
       // Show result
@@ -342,11 +343,12 @@ async function startVocabQuiz(interaction: ChatInputCommandInteraction): Promise
       `**${grade}**\n\n` +
       `Hai risposto correttamente a **${correctAnswers}/${totalQuestions}** domande (${percentage}%)`
     )
-    .addFields({
-      name: '📊 XP Guadagnati',
-      value: `+${correctAnswers * config.xp.perQuizCorrect} XP`,
-      inline: true,
-    })
+    // XP system disabled - removed XP display
+    // .addFields({
+    //   name: '📊 XP Guadagnati',
+    //   value: `+${correctAnswers * config.xp.perQuizCorrect} XP`,
+    //   inline: true,
+    // })
     .setFooter({ text: 'よく頑張りました! (Hai fatto un buon lavoro!)' })
     .setTimestamp();
 

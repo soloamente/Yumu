@@ -205,7 +205,8 @@ async function startTypingGame(interaction: ChatInputCommandInteraction): Promis
       if (isCorrect) {
         correctCount++;
         totalTime += timeTaken;
-        awardXp(interaction.user.id, interaction.user.username, 15);
+        // XP system disabled - no longer awarding XP
+        // awardXp(interaction.user.id, interaction.user.username, 15);
 
         await interaction.editReply({
           embeds: [new EmbedBuilder()

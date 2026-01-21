@@ -243,7 +243,8 @@ async function startQuiz(interaction: ChatInputCommandInteraction): Promise<void
 
       if (isCorrect) {
         correctAnswers++;
-        awardXp(interaction.user.id, interaction.user.username, config.xp.perQuizCorrect);
+        // XP system disabled - no longer awarding XP
+        // awardXp(interaction.user.id, interaction.user.username, config.xp.perQuizCorrect);
       }
 
       // Show result
@@ -350,11 +351,12 @@ async function startQuiz(interaction: ChatInputCommandInteraction): Promise<void
       `**${grade}**\n\n` +
       `Hai risposto correttamente a **${correctAnswers}/${totalQuestions}** domande (${percentage}%)`
     )
-    .addFields({
-      name: '📊 XP Guadagnati',
-      value: `+${correctAnswers * config.xp.perQuizCorrect} XP`,
-      inline: true,
-    })
+    // XP system disabled - removed XP display
+    // .addFields({
+    //   name: '📊 XP Guadagnati',
+    //   value: `+${correctAnswers * config.xp.perQuizCorrect} XP`,
+    //   inline: true,
+    // })
     .setFooter({ text: '頑張りました! (Hai lavorato duro!)' })
     .setTimestamp();
 

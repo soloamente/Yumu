@@ -260,8 +260,8 @@ function startWordCollector(interaction: ChatInputCommandInteraction, session: G
     const currentScore = session.players.get(message.author.id) || 0;
     session.players.set(message.author.id, currentScore + 1);
 
-    // Award XP
-    awardXp(message.author.id, message.author.username, 5);
+    // XP system disabled - no longer awarding XP
+    // awardXp(message.author.id, message.author.username, 5);
 
     // Get next mora using reading if available
     const nextMora = getLastMora(word, wordReading);
@@ -320,10 +320,10 @@ function endGame(
     const won = wasLoss ? playerId !== loserId : false;
     gameStatsSchema.update(playerId, 'shiritori', won, score);
     
-    // Award bonus XP for winner
-    if (won) {
-      userSchema.updateXp(playerId, config.xp.perGameWin);
-    }
+    // XP system disabled - no longer awarding XP for winners
+    // if (won) {
+    //   userSchema.updateXp(playerId, config.xp.perGameWin);
+    // }
   }
 
   console.log(`[Shiritori] Game ended in channel ${session.channelId}, words played: ${data.usedWords.size}`);

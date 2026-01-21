@@ -202,7 +202,8 @@ function startWordCollector(interaction: ChatInputCommandInteraction, session: G
     // Award points
     const currentScore = session.players.get(userId) || 0;
     session.players.set(userId, currentScore + 1);
-    awardXp(userId, message.author.username, 10);
+    // XP system disabled - no longer awarding XP
+    // awardXp(userId, message.author.username, 10);
 
     // Clear timer and start new round
     if (currentData.turnTimeout) {
@@ -297,9 +298,10 @@ async function endGame(interaction: ChatInputCommandInteraction, session: GameSe
   for (const [playerId, score] of session.players) {
     const won = winner && playerId === winner[0];
     gameStatsSchema.update(playerId, 'word_bomb', won, score);
-    if (won) {
-      awardXp(playerId, 'Unknown', config.xp.perGameWin);
-    }
+    // XP system disabled - no longer awarding XP for winners
+    // if (won) {
+    //   awardXp(playerId, 'Unknown', config.xp.perGameWin);
+    // }
   }
 
   const channel = interaction.channel as TextChannel | null;
