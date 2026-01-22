@@ -18,8 +18,7 @@ import {
   hasKanji
 } from '../../utils/japanese.js';
 import { validateJapaneseWord, getWordReading } from '../../services/jisho-service.js';
-import { userSchema, gameStatsSchema } from '../../database/schema.js';
-import { awardXp } from '../../services/level-service.js';
+import { gameStatsSchema } from '../../database/schema.js';
 import { validateGameChannel } from '../../utils/game-channel-validator.js';
 
 interface ShiritoriData {

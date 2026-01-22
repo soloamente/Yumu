@@ -13,7 +13,6 @@ import type { Command } from '../../types/index.js';
 import { config } from '../../config.js';
 import { errorEmbed } from '../../utils/embed-builder.js';
 import { gameStatsSchema } from '../../database/schema.js';
-import { awardXp } from '../../services/level-service.js';
 import { registerSelectMenuHandler } from '../../utils/component-handler.js';
 import { validateGameChannel } from '../../utils/game-channel-validator.js';
 

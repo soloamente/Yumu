@@ -12,7 +12,6 @@ import {
 import type { Command } from '../../types/index.js';
 import { config } from '../../config.js';
 import { gameStatsSchema } from '../../database/schema.js';
-import { awardXp } from '../../services/level-service.js';
 import { validateGameChannel } from '../../utils/game-channel-validator.js';
 
 // Sample sentences for typing practice
@@ -272,11 +271,12 @@ async function startTypingGame(interaction: ChatInputCommandInteraction): Promis
       `**Frasi corrette:** ${correctCount}/${selectedSentences.length} (${accuracy}%)\n` +
       (correctCount > 0 ? `**Tempo medio:** ${avgTime.toFixed(2)} secondi` : '')
     )
-    .addFields({
-      name: '📊 XP Guadagnati',
-      value: `+${correctCount * 15} XP`,
-      inline: true,
-    })
+    // XP system disabled - removed XP display
+    // .addFields({
+    //   name: '📊 XP Guadagnati',
+    //   value: `+${correctCount * 15} XP`,
+    //   inline: true,
+    // })
     .setFooter({ text: '練習は完璧を作る! (La pratica rende perfetti!)' })
     .setTimestamp();
 

@@ -116,6 +116,10 @@ Tutti i task sono stati completati con successo:
 - Deploy del comando (se necessario, eseguire script di deploy)
 - Verifica che i ruoli vengano aggiornati correttamente
 
+### Manutenzione (2026-01-22)
+- **Motivo**: Il typecheck falliva con errori TS6133 (import/funzioni non usati) dopo aver disabilitato l’XP in alcuni moduli di gioco/eventi.
+- **Azione**: Rimossi gli import `awardXp`/`userSchema` non più usati e resa `awardMessageXp()` una funzione esportata (così resta disponibile per riattivare l’XP senza rompere il build).
+
 ## Executor's Feedback or Assistance Requests
 
 **Implementazione completata con successo!**
@@ -127,6 +131,10 @@ Il comando `/xpmanage` è pronto per essere testato. Tutte le funzionalità sono
 - Gestione errori appropriata
 
 **Nota tecnica**: Il comando importa `xpForLevel` dal level-service ma non lo usa direttamente (il calcolo è già nel database schema). L'import può essere rimosso in futuro se necessario, ma non causa problemi.
+
+**Richiesta**: Dopo queste modifiche, eseguire il typecheck (`npm run check-types`) per confermare che gli errori TS6133 siano risolti.
+
+**Aggiornamento**: In questo repo lo script corretto è `npm run build` (esegue `tsc`). Il comando ora passa senza errori.
 
 ## Lessons
 

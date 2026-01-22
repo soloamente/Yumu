@@ -25,7 +25,9 @@ const messageCreate: Event = {
 /**
  * Award XP for sending messages
  */
-async function awardMessageXp(message: Message): Promise<void> {
+// Exported so TypeScript doesn't treat it as "unused" while XP is disabled.
+// If you re-enable XP in the future, uncomment the call in the event handler above.
+export async function awardMessageXp(message: Message): Promise<void> {
   const userId = message.author.id;
 
   // Check cooldown
